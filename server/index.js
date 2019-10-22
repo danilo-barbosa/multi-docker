@@ -1,0 +1,67 @@
+const keys = require('./keys');
+
+// Express setup
+const express = require('express');
+const bodyparser = require('body-parser');
+const cors = require('cors');
+
+const app = express();
+app.use(cors());
+app.use(bodyparser.json());
+
+//Postgre client setup
+const { Pool } = require('pg');
+const pgClient = new Pool({
+    user: keys.pgUser,
+    host: keys.pgHost,
+    database: keys.pgDatabase,
+    password: keys.pgPassword,
+    port: keys.pgPort
+});
+
+pgClient.on('error', () => console.log('Erro ao conectar no Postgre'));
+
+pgClient.query('CREATE TABLE IF NOT EXISTS valores (number INT)').catch(err => console.log(err));
+
+// Redis client setup
+
+const redis = require('redis');
+const redisClient = redis.createClient({
+    host: keys.redisHost,
+    port: keys.redisPort,
+    retry_strategy: () => 1000
+});
+const redisPublisher = redisClient.duplicate();
+
+// Express roteamento de validações
+
+app.get('/', (req,res) => {
+    res.send('Funcionando.');
+});
+
+app.get('/values/all', async (req,res) => {
+    let valores = await pgClient.query('SELECT * FROM valores');
+    res.send(valores.rows);
+});
+
+app.get('/values/current', async (req,res) => {
+    redisClient.hgetall('values',(err,values) => {
+        res.send(values);
+    });    
+});
+
+app.post('/values', async (req,res) => {
+    let index = req.body.index;
+    if (parseInt(index) > 20) {
+        return res.status(422).send('Valor muito alto (máximo 20)');
+    }
+    redisClient.hset('values',index,'Nada ainda!');
+    redisPublisher.publish('insert',index);
+
+    pgClient.query('INSERT INTO valores(number) values ($1)', [index]);
+    res.send({working: true});
+});
+
+app.listen(5000, err =>{
+    console.log('Escutando na porta 5000');
+});
