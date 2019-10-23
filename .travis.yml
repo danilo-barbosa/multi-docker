@@ -9,14 +9,14 @@ script:
   - docker run -e CI=true dbs npm test
 
 after_success:
-  - docker build -t danilo-barbosa/multi-client ./client
-  - docker build -t danilo-barbosa/multi-nginx ./nginx
-  - docker build -t danilo-barbosa/multi-server ./server
-  - docker build -t danilo-barbosa/multi-worker ./worker
+  - docker build -t joeromir/multi-client ./client
+  - docker build -t joeromir/multi-nginx ./nginx
+  - docker build -t joeromir/multi-server ./server
+  - docker build -t joeromir/multi-worker ./worker
   # logar no docker
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
   # push images
-  - docker push danilo-barbosa/multi-client
-  - docker push danilo-barbosa/multi-nginx
-  - docker push danilo-barbosa/multi-server
-  - docker push danilo-barbosa/multi-worker
+  - docker push joeromir/multi-client
+  - docker push joeromir/multi-nginx
+  - docker push joeromir/multi-server
+  - docker push joeromir/multi-worker
