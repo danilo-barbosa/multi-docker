@@ -3,7 +3,7 @@ services:
   - docker
 
 before_install:
-  - docker build -t dbs -f ./client/Dockerfile.dev
+  - docker build -t dbs -f ./client/Dockerfile.dev ./client
 
 script:
   - docker run dbs npm test -- --coverage
